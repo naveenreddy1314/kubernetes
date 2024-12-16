@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-api-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flask-api
+  template:
+    metadata:
+      labels:
+        app: flask-api
+    spec:
+      containers:
+        - name: flask-api
+          image: naveen1314/flask-api:latest
+          ports:
+            - containerPort: 5000
+          env:
+            - name: MYSQL_SERVICE_HOST
+              value: "mysql-service"
+            - name: MYSQL_SERVICE_PORT
+              value: "3306"
+            - name: db_root_password
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-credentials
+                  key: MYSQL_ROOT_PASSWORD
+            - name: db_name
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-config
+                  key: MYSQL_DATABASE
+            - name: LOG_DIR
+              value: "/var/log/flask-api"
+          volumeMounts:
+            - mountPath: /var/log/flask-api
+              name: flask-api-logs
+      volumes:
+        - name: flask-api-logs
+          persistentVolumeClaim:
+            claimName: flask-api-log-pvc
+
+
+
+
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-api-service
+spec:
+  selector:
+    app: flask-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+      nodePort: 30000
+  type: NodePort
