@@ -3,6 +3,7 @@ kind: Ingress
 metadata:
   name: flask-api-ingress
 spec:
+  ingressClassName: nginx
   rules:
     - host: flask-api.local
       http:
